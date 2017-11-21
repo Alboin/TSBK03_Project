@@ -33,9 +33,9 @@ void VoxelData::generateData(const unsigned seed)
             for(unsigned z = 0; z < _dim_z; z++)
             {
                 //if(x == _dim_x/2 && y == _dim_y/2 && z == _dim_z/2)
-                //if(x > _dim_x /4 && x < 3*_dim_x/4 && y > _dim_y /4 && y < 3*_dim_y/4 && z > _dim_z /4 && z < 3*_dim_z/4)
+                // if(x > _dim_x /4 && x < 3*_dim_x/4 && y > _dim_y /4 && y < 3*_dim_y/4 && z > _dim_z /4 && z < 3*_dim_z/4)
                 //    _data[x][y][z] = 1.0;
-                //else
+                // else
                 //    _data[x][y][z] = 0.0;
 
                 float a = (float)(x - (_dim_x / 2)) / (_dim_x / 2);
@@ -48,7 +48,7 @@ void VoxelData::generateData(const unsigned seed)
 
 }
 
-void VoxelData::getInfo(bool showdata, bool printvertices) const
+void VoxelData::getInfo(bool showdata, bool printvertices, bool printnormals) const
 {
     if(showdata)
         for(unsigned x = 0; x < _dim_x; x++)
@@ -67,6 +67,10 @@ void VoxelData::getInfo(bool showdata, bool printvertices) const
     if(printvertices)
         for(unsigned i = 0; i < _vertices.size(); i++)
             std::cout << "Vertice " << i << ": " << _vertices[i] << std::endl;
+
+    if(printnormals)
+        for(unsigned i = 0; i < _normals.size(); i++)
+            std::cout << "Normal " << i << ": " << _normals[i] << std::endl;
 
     std::cout << "Vertices: " << _vertices.size() << std::endl;
     std::cout << "Normals: " << _normals.size() << std::endl;
@@ -199,8 +203,9 @@ void VoxelData::calculateNormals()
     _normals.resize(_vertices.size());
     for(unsigned i = 0; i < _indices.size(); i++)
     {
-        glm::vec3 normal = _vertices[_indices[i].x] + _vertices[_indices[i].y] + _vertices[_indices[i].z];
-        normal = glm::normalize(normal);
+        glm::vec3 a = _vertices[_indices[i].y] - _vertices[_indices[i].x];
+        glm::vec3 b = _vertices[_indices[i].z] - _vertices[_indices[i].x];
+        glm::vec3 normal = glm::normalize(glm::cross(a, b));
 
         _normals[_indices[i].x] = normal;
         _normals[_indices[i].y] = normal;

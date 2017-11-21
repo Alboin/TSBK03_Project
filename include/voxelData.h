@@ -21,7 +21,7 @@ public:
 
     void generateTriangles(const float isovalue);
 
-    void getInfo(bool showdata = false, bool printvertices = false) const;
+    void getInfo(bool showdata = false, bool printvertices = false, bool printnormals = false) const;
 
     void draw() const;
 
