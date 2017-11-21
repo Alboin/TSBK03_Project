@@ -1,5 +1,12 @@
 #include "voxelData.h"
 
+// Function for printing glm::vec3 for debugging.
+std::ostream& operator<<(std::ostream& os, const glm::vec3 &v)
+{
+    os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return os;
+} 
+
 VoxelData::VoxelData(const unsigned dimx, const unsigned dimy, const unsigned dimz)
 : _dim_x(dimx), _dim_y(dimy), _dim_z(dimz), _table(LookupTable())
 {
@@ -13,6 +20,7 @@ VoxelData::VoxelData(const unsigned dimx, const unsigned dimy, const unsigned di
             _data[i][j].resize(dimz);
         }
     }
+
 }
 
 void VoxelData::generateData(const unsigned seed)
@@ -24,13 +32,23 @@ void VoxelData::generateData(const unsigned seed)
         {
             for(unsigned z = 0; z < _dim_z; z++)
             {
-                _data[x][y][z] = sqrt(pow((float)x / _dim_x, 2) + pow((float)y / _dim_y, 2) + pow((float)z / _dim_z, 2));
+                //if(x == _dim_x/2 && y == _dim_y/2 && z == _dim_z/2)
+                //if(x > _dim_x /4 && x < 3*_dim_x/4 && y > _dim_y /4 && y < 3*_dim_y/4 && z > _dim_z /4 && z < 3*_dim_z/4)
+                //    _data[x][y][z] = 1.0;
+                //else
+                //    _data[x][y][z] = 0.0;
+
+                float a = (float)(x - (_dim_x / 2)) / (_dim_x / 2);
+                float b = (float)(y - (_dim_y / 2)) / (_dim_y / 2);
+                float c = (float)(z - (_dim_z / 2)) / (_dim_z / 2);
+                _data[x][y][z] = sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
             }
         }
     }
+
 }
 
-void VoxelData::getInfo(bool showdata) const
+void VoxelData::getInfo(bool showdata, bool printvertices) const
 {
     if(showdata)
         for(unsigned x = 0; x < _dim_x; x++)
@@ -45,6 +63,10 @@ void VoxelData::getInfo(bool showdata) const
             }
             std::cout << std::endl;
         }
+    
+    if(printvertices)
+        for(unsigned i = 0; i < _vertices.size(); i++)
+            std::cout << "Vertice " << i << ": " << _vertices[i] << std::endl;
 
     std::cout << "Vertices: " << _vertices.size() << std::endl;
     std::cout << "Normals: " << _normals.size() << std::endl;
@@ -64,30 +86,30 @@ void VoxelData::generateTriangles(const float isovalue)
 				unsigned triangleConfiguration = 0;
 
 				// Compare the datapoints in one cube to the threshold.
-				if (_data[x][y][z] > isovalue)
-					triangleConfiguration += pow(2, 0);
-				if (_data[x+1][y][z] > isovalue)
-					triangleConfiguration += pow(2, 1);
-				if (_data[x][y+1][z] > isovalue)
-					triangleConfiguration += pow(2, 2);
-				if (_data[x+1][y+1][z] > isovalue)
-                    triangleConfiguration += pow(2, 3);
+				if (_data[x][y][z] > isovalue) triangleConfiguration |= 1;
+				if (_data[x][y+1][z] > isovalue) triangleConfiguration |= 2;
+				if (_data[x+1][y+1][z] > isovalue) triangleConfiguration |= 4;
+				if (_data[x+1][y][z] > isovalue) triangleConfiguration |= 8;
 
-				if (_data[x][y][z+1] > isovalue)
-					triangleConfiguration += pow(2, 4);
-                if (_data[x+1][y][z+1] > isovalue)
-					triangleConfiguration += pow(2, 5);
-                if (_data[x][y+1][z+1] > isovalue)
-					triangleConfiguration += pow(2, 6);
-                if (_data[x+1][y+1][z+1] > isovalue)
-					triangleConfiguration += pow(2, 7);
+				if (_data[x][y][z+1] > isovalue) triangleConfiguration |= 16;
+                if (_data[x][y+1][z+1] > isovalue) triangleConfiguration |= 32;
+                if (_data[x+1][y+1][z+1] > isovalue) triangleConfiguration |= 64;
+                if (_data[x+1][y][z+1] > isovalue) triangleConfiguration |= 128;
 
-				// Get the triangle configuration for this data.
-                std::vector<std::vector<unsigned>> triangles = _table.lookup(triangleConfiguration);
+                // Get the triangle configuration for this data.
+                //std::vector<std::vector<unsigned>> triangles = _table.lookup(triangleConfiguration);
 
 				// Add vertices at the necessary edges, at the correct positions.
-                for (unsigned n = 0; n < triangles.size(); n++)
-					createTriangle(triangles[n], x, y, z);
+                for(unsigned n = 0; n < 16 && _table.triangleTable[triangleConfiguration][n] != -1; n += 3)
+                {
+                    unsigned e1 = _table.triangleTable[triangleConfiguration][n];
+                    unsigned e2 = _table.triangleTable[triangleConfiguration][n+1];
+                    unsigned e3 = _table.triangleTable[triangleConfiguration][n+2];
+                    createTriangle(e1, e2, e3, x, y, z);
+                }
+                    
+                //for (unsigned n = 0; n < triangles.size(); n++)
+				//	createTriangle(triangles[n], x, y, z);
 
             }
             
@@ -96,11 +118,13 @@ void VoxelData::generateTriangles(const float isovalue)
     createBuffers();
 }
 
-void VoxelData::createTriangle(std::vector<unsigned> edges, const unsigned x, const unsigned y, const unsigned z)
+void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsigned x, const unsigned y, const unsigned z)
 {
 
+    unsigned edges[] = {e1, e2, e3};
+
     // Loop through the three edges.
-    for(unsigned i = 0; i < edges.size(); i++)
+    for(unsigned i = 0; i < 3; i++)
     {
         unsigned v1, v2;
 
@@ -112,11 +136,19 @@ void VoxelData::createTriangle(std::vector<unsigned> edges, const unsigned x, co
         }
         else
         {
-            v1 = edges[i] - 8;
-            v2 = edges[i] - 4;
+            v1 = edges[i] - 4;
+            v2 = edges[i] - 8;
+            /*if(edges[i] == 8)
+                v1 = 1, v2 = 5;
+            else if(edges[i] == 9)
+                v1 = 2, v2 = 6;
+            else if(edges[i] == 10)
+                v1 = 0, v2 = 0;
+            else if(edges[i] == 11)
+                v1 = 3, v2 = 7;*/
         }
         
-        // Get the world position for the two vertices.
+        // Get the world position for the two vertices (not yet between 0 and 1).
         glm::ivec3 pos1 = getPosition(v1, x, y, z);
         glm::ivec3 pos2 = getPosition(v2, x, y, z);
 
@@ -124,10 +156,16 @@ void VoxelData::createTriangle(std::vector<unsigned> edges, const unsigned x, co
         float d1 = _data[pos1.x][pos1.y][pos1.z];
         float d2 = _data[pos2.x][pos2.y][pos2.z];
 
-        // Interpolate between them with the given isovalue.
-        glm::vec3 interpolatedPos = (glm::vec3)pos1 + (glm::vec3)(pos2 - pos1) * ((_isovalue - d1) / (d2 - d1));
+        // "Normalize" the positions so that the maximum value is 1 and minimum 0.
+        glm::vec3 normalizedPos1 = glm::vec3((float)pos1.x / (float)_dim_x, (float)pos1.y / (float)_dim_y, (float)pos1.z / (float)_dim_z);
+        glm::vec3 normalizedPos2 = glm::vec3((float)pos2.x / (float)_dim_x, (float)pos2.y / (float)_dim_y, (float)pos2.z / (float)_dim_z);
 
-        _vertices.push_back(interpolatedPos);
+        // Interpolate between them with the given isovalue.
+        glm::vec3 interpolatedPos = normalizedPos1 + ((normalizedPos2 - normalizedPos1) * ((_isovalue - d1) / (d2 - d1)));
+        
+        // Center the vertex (so that the whole grid is centered around origo) and add it to the array.
+        glm::vec3 center = glm::vec3(0.5f, 0.5f, 0.5f);
+        _vertices.push_back((interpolatedPos  - center) * 15.0f);
     }
 
     _indices.push_back(glm::ivec3(_vertices.size() - 3, _vertices.size() - 2, _vertices.size() - 1));
@@ -135,15 +173,18 @@ void VoxelData::createTriangle(std::vector<unsigned> edges, const unsigned x, co
 
 const glm::ivec3 VoxelData::getPosition(const unsigned v, unsigned x, unsigned y, unsigned z) const
 {
-
-    if(v == 1 || v == 2 || v == 5 || v == 6)
-        x++;
-    if(v > 3)
-        y++;
     if(v == 2 || v == 3 || v == 6 || v == 7)
+        x++;
+    if(v == 1 || v == 2 || v == 5 || v == 6)
+        y++;
+    if(v > 3)
         z++;
 
-    return glm::vec3(x,y,z);
+    //glm::vec3 temp = glm::vec3((float)x / (float)_dim_x, (float)y / (float)_dim_y, (float)z / (float)_dim_z);
+        
+    //std::cout << (float)x << " : " << (float)_dim_x << " : " << (float)x / (float)_dim_x << temp << std::endl;
+    
+    return glm::vec3(x, y, z);
 }
 
 
@@ -218,5 +259,3 @@ void VoxelData::createBuffers()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
-
-

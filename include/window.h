@@ -9,7 +9,7 @@ class Window{
 public:
     Window(GLFWwindow* &window, int width, int height);
     void initFrame();
-    
+
 private:
     int width, height;
 };

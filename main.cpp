@@ -15,6 +15,17 @@
 #define W 512
 #define H 512
 
+bool WIREFRAME = false;
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
+{
+	if (key == GLFW_KEY_W && action == GLFW_PRESS && WIREFRAME)
+		WIREFRAME = false;
+	else if(key == GLFW_KEY_W && action == GLFW_PRESS)
+		WIREFRAME = true;
+	
+}
+
 int main()
 {
 	// Variables for the fps-counter
@@ -25,6 +36,7 @@ int main()
 	// Define window
 	GLFWwindow *window = nullptr;
 	Window w = Window(window, W, H);
+	glfwSetKeyCallback(window, key_callback);	
 
 	float time = 0.0f;
 
@@ -45,10 +57,10 @@ int main()
 	rotator.init(window);
 
 	// Create data-volume
-	VoxelData volume(3,3,3);
+	VoxelData volume(10,10,10);
 	volume.generateData();
 	volume.generateTriangles(0.5f);
-	volume.getInfo();
+	volume.getInfo(false, true);
 
 	do
 	{
@@ -57,9 +69,12 @@ int main()
 		glm::vec3 clear_color = glm::vec3(0.4f, 0.15f, 0.26f);
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, 1.0f);
 		rotator.poll(window);
+		
+		//Checks if any events are triggered (like keyboard or mouse events)
+		glfwPollEvents();
 
 
-		if(glfwGetKey(window, GLFW_KEY_W)){
+		if(WIREFRAME){
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}else{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

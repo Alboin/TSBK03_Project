@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <math.h>
 #include <iostream>
@@ -19,13 +21,13 @@ public:
 
     void generateTriangles(const float isovalue);
 
-    void getInfo(bool showdata = false) const;
+    void getInfo(bool showdata = false, bool printvertices = false) const;
 
     void draw() const;
 
 private:
 
-    void createTriangle(std::vector<unsigned> edges, const unsigned x, const unsigned y, const unsigned z);
+    void createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsigned x, const unsigned y, const unsigned z);
 
     const glm::ivec3 getPosition(const unsigned v, unsigned x, unsigned y, unsigned z) const;
 
@@ -35,7 +37,7 @@ private:
 
     void createVBO();
     void createBuffers();
-    
+
     // Data structures for the voxels.
     const unsigned _dim_x, _dim_y, _dim_z;
     float _isovalue;
