@@ -15,8 +15,27 @@ uniform vec2 window_dim;
 uniform sampler2D refractionTexture;
 uniform sampler2D earthTexture;
 
+// A function for generating grass-looking texture on the up-side of objects.
+vec3 grassOnTop()
+{
+	vec3 up = vec3(0,-1,0);
+
+	//float green = min(max(dot(newNormal, up), 0.0) + 0.2, 1.0);
+	vec3 brown = vec3(0.7, 0.5, 0.3);
+	vec3 green = vec3(0.3, 0.8, 0.3); 
+
+	float picker = smoothstep(0.55, 0.75, (dot(newNormal, up) / 2.0) + 0.5f);
+
+	vec3 color = mix(brown, green, picker);
+
+	return color;
+}
+
 void main()
 {
+
+	vec3 color = grassOnTop();
+	
 
 	const vec3 light = vec3(0.58, 0.58, 0.58); // Given in VIEW coordinates! You usually specify light sources in world coordinates.
 	float ambient, diffuse, specular, shade;
@@ -38,6 +57,5 @@ void main()
 	
 	// Mix
 	shade = 0.7*diffuse + 0.5*specular + 0.3*ambient;
-	vec3 color = vec3(0.8, 0.6, 0.7);
 	outColor = vec4(shade * color + 0.6 * clear_color, 1.0);
 } 

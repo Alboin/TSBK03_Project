@@ -1,3 +1,5 @@
 Textur - ändra textur/färg beroende på normal? Görs enklast i shader. Kan nog lägga till något slags noise här också?
 
 Intressantare procedurell generering, perlin noise till att börja med? Kolla hur de gör i artikeln.
+
+Fixa glsl-plugin till visual code.

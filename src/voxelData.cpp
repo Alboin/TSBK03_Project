@@ -33,15 +33,17 @@ void VoxelData::generateData(const unsigned seed)
             for(unsigned z = 0; z < _dim_z; z++)
             {
                 //if(x == _dim_x/2 && y == _dim_y/2 && z == _dim_z/2)
-                // if(x > _dim_x /4 && x < 3*_dim_x/4 && y > _dim_y /4 && y < 3*_dim_y/4 && z > _dim_z /4 && z < 3*_dim_z/4)
-                //    _data[x][y][z] = 1.0;
-                // else
-                //    _data[x][y][z] = 0.0;
+                //if(x > _dim_x /4 && x < 3*_dim_x/4 && y > _dim_y /4 && y < 3*_dim_y/4 && z > _dim_z /4 && z < 3*_dim_z/4)
+                //   _data[x][y][z] = 1.0;
+                //else
+                //   _data[x][y][z] = 0.0;
 
-                float a = (float)(x - (_dim_x / 2)) / (_dim_x / 2);
-                float b = (float)(y - (_dim_y / 2)) / (_dim_y / 2);
-                float c = (float)(z - (_dim_z / 2)) / (_dim_z / 2);
-                _data[x][y][z] = sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
+
+
+                // float a = (float)(x - (_dim_x / 2)) / (_dim_x / 2);
+                // float b = (float)(y - (_dim_y / 2)) / (_dim_y / 2);
+                // float c = (float)(z - (_dim_z / 2)) / (_dim_z / 2);
+                // _data[x][y][z] = sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
             }
         }
     }

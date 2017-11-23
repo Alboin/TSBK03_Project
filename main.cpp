@@ -60,7 +60,7 @@ int main()
 	VoxelData volume(10,10,10);
 	volume.generateData();
 	volume.generateTriangles(0.5f);
-	volume.getInfo(false, true);
+	volume.getInfo(false, false);
 
 	do
 	{
