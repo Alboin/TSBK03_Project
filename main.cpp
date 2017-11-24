@@ -57,7 +57,7 @@ int main()
 	rotator.init(window);
 
 	// Create data-volume
-	VoxelData volume(10,10,10);
+	VoxelData volume(100, 0.5);
 	volume.generateData();
 	volume.generateTriangles(0.5f);
 	volume.getInfo(false, false);

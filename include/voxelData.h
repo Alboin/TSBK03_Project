@@ -10,12 +10,13 @@
 
 #include "glm/glm.hpp"
 #include "lookuptable.h"
+#include "simplexnoise1234.h"
 
 class VoxelData
 {
 public:
     
-    VoxelData(const unsigned dimx, const unsigned dimy, const unsigned dimz);
+    VoxelData(const unsigned dim, const float gridSize, const glm::vec3 gridCenter = glm::vec3(0));
     
     void generateData(const unsigned seed = 0);
 
@@ -39,7 +40,9 @@ private:
     void createBuffers();
 
     // Data structures for the voxels.
-    const unsigned _dim_x, _dim_y, _dim_z;
+    const unsigned _dim;
+    const float _gridSize;
+    const glm::vec3 _gridCenter;
     float _isovalue;
     std::vector<std::vector<std::vector<float>>> _data;
 

@@ -2,4 +2,6 @@ Textur - ändra textur/färg beroende på normal? Görs enklast i shader. Kan no
 
 Intressantare procedurell generering, perlin noise till att börja med? Kolla hur de gör i artikeln.
 
+Ändra funktionen för att skapa ett nytt voxel-grid så att den tar in bara en dimension (som sätts till alla sen) och en cell-size, för att bestämma storleken på en cell, eller storleken på hela grid:et.
+
 Fixa glsl-plugin till visual code.

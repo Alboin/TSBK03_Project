@@ -20,7 +20,6 @@ vec3 grassOnTop()
 {
 	vec3 up = vec3(0,-1,0);
 
-	//float green = min(max(dot(newNormal, up), 0.0) + 0.2, 1.0);
 	vec3 brown = vec3(0.7, 0.5, 0.3);
 	vec3 green = vec3(0.3, 0.8, 0.3); 
 
