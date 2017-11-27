@@ -26,7 +26,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	
 }
 
-int main()
+int main(int argc, const char * argv[])
 {
 	// Variables for the fps-counter
 	double t0 = 0.0;
@@ -37,8 +37,6 @@ int main()
 	GLFWwindow *window = nullptr;
 	Window w = Window(window, W, H);
 	glfwSetKeyCallback(window, key_callback);	
-
-	float time = 0.0f;
 
 	// Define meshes
 	Quad quad = Quad();
@@ -56,16 +54,24 @@ int main()
 	MouseRotator rotator;
 	rotator.init(window);
 
+	// Get user input on grid parameters
+	int gridDimension = 100;
+	float gridSize = 0.5;
+	if(argc > 0 && atof(argv[1]) > 0)
+		gridDimension = atof(argv[1]);
+	if(argc > 1 && atof(argv[2]) > 0.05)
+		gridSize = atof(argv[2]);
+
 	// Create data-volume
-	VoxelData volume(100, 0.5);
+	VoxelData volume(gridDimension, gridSize);
 	volume.generateData();
 	volume.generateTriangles(0.5f);
 	volume.getInfo(false, false);
+	
 
 	do
 	{
 		w.initFrame();
-		time += 0.1f;
 		glm::vec3 clear_color = glm::vec3(0.4f, 0.15f, 0.26f);
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, 1.0f);
 		rotator.poll(window);
@@ -84,7 +90,7 @@ int main()
 		screenBuffer.bindBuffer();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		phong_shader();
-		phong_shader.updateCommonUniforms(rotator, W, H, time, clear_color);
+		phong_shader.updateCommonUniforms(rotator, W, H, glfwGetTime(), clear_color);
 		sphere.draw();
 		volume.draw();
 
@@ -98,7 +104,7 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		screenBuffer.bindTexture();
 
-		screen_shader.updateCommonUniforms(rotator, W, H, time, clear_color);
+		screen_shader.updateCommonUniforms(rotator, W, H, glfwGetTime(), clear_color);
 		quad.draw();
 
 		glfwSwapBuffers(window);

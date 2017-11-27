@@ -38,9 +38,11 @@ void VoxelData::generateData(const unsigned seed)
                 //else
                 //   _data[x][y][z] = 0.0;
 
-                float scale = 100;
-                scale = scale * _gridSize / (float)_dim;
-                _data[x][y][z] = snoise3(scale * x,scale * y,scale * z);
+                float noiseScale = 1.2;
+
+                glm::vec3 pos = getWorldPosition(x,y,z) * noiseScale;
+                
+                _data[x][y][z] = snoise3(pos.x,pos.y,pos.z);
 
                 // if(rand() % 100 < 10)
                 //     _data[x][y][z] = 1.0;
@@ -162,8 +164,8 @@ void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsi
         float d2 = _data[pos2.x][pos2.y][pos2.z];
 
         // "Normalize" the positions so that the maximum value is 1 and minimum 0.
-        glm::vec3 normalizedPos1 = glm::vec3((float)pos1.x / (float)_dim, (float)pos1.y / (float)_dim, (float)pos1.z / (float)_dim) * _gridSize;
-        glm::vec3 normalizedPos2 = glm::vec3((float)pos2.x / (float)_dim, (float)pos2.y / (float)_dim, (float)pos2.z / (float)_dim) * _gridSize;
+        glm::vec3 normalizedPos1 = ((glm::vec3)pos1 * (1.0f / (float)_dim)) * _gridSize; //glm::vec3((float)pos1.x / (float)_dim, (float)pos1.y / (float)_dim, (float)pos1.z / (float)_dim) * _gridSize;
+        glm::vec3 normalizedPos2 = ((glm::vec3)pos2 * (1.0f / (float)_dim)) * _gridSize; //glm::vec3((float)pos2.x / (float)_dim, (float)pos2.y / (float)_dim, (float)pos2.z / (float)_dim) * _gridSize;
 
         // Interpolate between them with the given isovalue.
         glm::vec3 interpolatedPos = normalizedPos1 + ((normalizedPos2 - normalizedPos1) * ((_isovalue - d1) / (d2 - d1)));
@@ -188,12 +190,35 @@ const glm::ivec3 VoxelData::getPosition(const unsigned v, unsigned x, unsigned y
     return glm::vec3(x, y, z);
 }
 
-
-
-const unsigned VoxelData::hashFunction(const unsigned x, const unsigned y, const unsigned z) const
+const glm::vec3 VoxelData::getWorldPosition(const unsigned x, const unsigned y, const unsigned z) const
 {
-    return 1;
+    glm::vec3 pos = (glm::vec3(x,y,z) * (1.0f / (float)_dim)) * _gridSize;
+    return pos + _gridCenter;
 }
+
+unsigned VoxelData::getVertexId(const glm::vec3 v1, const glm::vec3 v2)
+{
+    // if(glm::length(v1) < glm::length(v2))
+    // {
+    //     auto it = _vertexIndexes.find(std::make_pair(v1, v2));
+    //     if(it == _vertexIndexes.end())
+    //     {
+    //         _vertexIndexes[std::make_pair(v1, v2)] = _idCounter;
+    //     }
+        
+    //     //std::map<std::pair<glm::vec3, glm::vec3>, unsigned> _vertexIndexes;
+        
+    // }
+    // // else
+    // // {
+    // //     _vertexIndexes[std::make_pair(v1, v2)] = _idCounter;
+        
+
+    // // }
+
+}
+
+
 
 void VoxelData::calculateNormals()
 {

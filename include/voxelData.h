@@ -3,6 +3,7 @@
 #include <vector>
 #include <math.h>
 #include <iostream>
+#include <map>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -31,9 +32,8 @@ private:
     void createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsigned x, const unsigned y, const unsigned z);
 
     const glm::ivec3 getPosition(const unsigned v, unsigned x, unsigned y, unsigned z) const;
-
-    const unsigned hashFunction(const unsigned x, const unsigned y, const unsigned z) const;
-
+    const glm::vec3 getWorldPosition(const unsigned x, const unsigned y, const unsigned z) const;
+    
     void calculateNormals();
 
     void createVBO();
@@ -45,6 +45,10 @@ private:
     const glm::vec3 _gridCenter;
     float _isovalue;
     std::vector<std::vector<std::vector<float>>> _data;
+    std::map<std::map<std::map<unsigned, int>>> _polygonIndex;
+
+    unsigned _idCounter = 0;
+    unsigned getVertexId(const glm::vec3 v1, const glm::vec3 v2);
 
     // Create a lookup-table for the triangle generation.
     LookupTable _table;
