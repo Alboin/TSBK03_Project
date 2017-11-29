@@ -45,7 +45,6 @@ private:
     const glm::vec3 _gridCenter;
     float _isovalue;
     std::vector<std::vector<std::vector<float>>> _data;
-    std::map<std::map<std::map<unsigned, int>>> _polygonIndex;
 
     unsigned _idCounter = 0;
     unsigned getVertexId(const glm::vec3 v1, const glm::vec3 v2);
@@ -61,5 +60,9 @@ private:
     std::vector<glm::vec3> _VBOarray;
 
     GLuint VBO, VAO, EBO;
+
+    inline int clamp(int n, int lower, int upper) {
+        return std::max(lower, std::min(n, upper));
+    }
     
 };

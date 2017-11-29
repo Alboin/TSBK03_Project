@@ -10,6 +10,8 @@ out vec2 texCoord;
 
 uniform mat4 MV;
 uniform mat4 P;
+uniform float time;
+
 
 //
 // Description : Array and textureless GLSL 2D/3D/4D simplex 
@@ -119,7 +121,7 @@ float snoise(vec3 v)
 
 void main() {
 	
-	newPos = position + (normal * snoise(position) * 0.1) + (normal * snoise(position * 0.5) * 0.5);
+	newPos = position + (normal * snoise(position) * 0.1) + (normal * snoise(position * 0.5 + time / 2.0) * 0.2);
 	newNormal = normal;
 	texCoord = uv;
 

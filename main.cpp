@@ -12,8 +12,8 @@
 #include "sphere.h"
 #include "voxelData.h"
 
-#define W 512
-#define H 512
+#define W 800
+#define H 800
 
 bool WIREFRAME = false;
 
@@ -72,7 +72,7 @@ int main(int argc, const char * argv[])
 	do
 	{
 		w.initFrame();
-		glm::vec3 clear_color = glm::vec3(0.4f, 0.15f, 0.26f);
+		glm::vec3 clear_color = glm::vec3(1.0f, 1.0f, 1.0f);
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, 1.0f);
 		rotator.poll(window);
 		

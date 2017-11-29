@@ -38,7 +38,7 @@ void VoxelData::generateData(const unsigned seed)
                 //else
                 //   _data[x][y][z] = 0.0;
 
-                float noiseScale = 1.2;
+                float noiseScale = 0.15;
 
                 glm::vec3 pos = getWorldPosition(x,y,z) * noiseScale;
                 
@@ -111,9 +111,6 @@ void VoxelData::generateTriangles(const float isovalue)
                 if (_data[x+1][y+1][z+1] > isovalue) triangleConfiguration |= 64;
                 if (_data[x+1][y][z+1] > isovalue) triangleConfiguration |= 128;
 
-                // Get the triangle configuration for this data.
-                //std::vector<std::vector<unsigned>> triangles = _table.lookup(triangleConfiguration);
-
 				// Add vertices at the necessary edges, at the correct positions.
                 for(unsigned n = 0; n < 16 && _table.triangleTable[triangleConfiguration][n] != -1; n += 3)
                 {
@@ -122,13 +119,10 @@ void VoxelData::generateTriangles(const float isovalue)
                     unsigned e3 = _table.triangleTable[triangleConfiguration][n+2];
                     createTriangle(e1, e2, e3, x, y, z);
                 }
-                    
-                //for (unsigned n = 0; n < triangles.size(); n++)
-				//	createTriangle(triangles[n], x, y, z);
 
             }
             
-    calculateNormals();
+    //calculateNormals();
     createVBO();
     createBuffers();
 }
@@ -172,7 +166,27 @@ void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsi
         
         // Center the vertex (so that the whole grid is centered around origo) and add it to the array.
         glm::vec3 center = (_gridCenter + glm::vec3(0.5f, 0.5f, 0.5f)) * _gridSize;
-        _vertices.push_back((interpolatedPos  - center) * 15.0f);
+        _vertices.push_back(interpolatedPos - center);
+
+        glm::vec3 normal = glm::vec3(0);
+        // Calculate normal from a coarse estimation of the gradient
+        for(int dx = -1; dx <= 1; dx++)
+            for(int dy = -1; dy <= 1; dy++)
+                for(int dz = -1; dz <= 1; dz++)
+                {
+                    int x1_clamped = clamp(pos1.x + dx, 0, _dim - 1);
+                    int y1_clamped = clamp(pos1.y + dy, 0, _dim - 1);
+                    int z1_clamped = clamp(pos1.z + dz, 0, _dim - 1);
+                    normal += glm::vec3(dx, dy, dz) * _data[x1_clamped][y1_clamped][z1_clamped];                        
+
+                    int x2_clamped = clamp(pos2.x + dx, 0, _dim - 1);
+                    int y2_clamped = clamp(pos2.y + dy, 0, _dim - 1);
+                    int z2_clamped = clamp(pos2.z + dz, 0, _dim - 1);
+                    normal += glm::vec3(dx, dy, dz) * _data[x2_clamped][y2_clamped][z2_clamped];                                            
+                }
+
+        _normals.push_back(glm::normalize(normal));
+        
     }
 
     _indices.push_back(glm::ivec3(_vertices.size() - 3, _vertices.size() - 2, _vertices.size() - 1));
@@ -193,32 +207,8 @@ const glm::ivec3 VoxelData::getPosition(const unsigned v, unsigned x, unsigned y
 const glm::vec3 VoxelData::getWorldPosition(const unsigned x, const unsigned y, const unsigned z) const
 {
     glm::vec3 pos = (glm::vec3(x,y,z) * (1.0f / (float)_dim)) * _gridSize;
-    return pos + _gridCenter;
+    return pos - _gridCenter;
 }
-
-unsigned VoxelData::getVertexId(const glm::vec3 v1, const glm::vec3 v2)
-{
-    // if(glm::length(v1) < glm::length(v2))
-    // {
-    //     auto it = _vertexIndexes.find(std::make_pair(v1, v2));
-    //     if(it == _vertexIndexes.end())
-    //     {
-    //         _vertexIndexes[std::make_pair(v1, v2)] = _idCounter;
-    //     }
-        
-    //     //std::map<std::pair<glm::vec3, glm::vec3>, unsigned> _vertexIndexes;
-        
-    // }
-    // // else
-    // // {
-    // //     _vertexIndexes[std::make_pair(v1, v2)] = _idCounter;
-        
-
-    // // }
-
-}
-
-
 
 void VoxelData::calculateNormals()
 {

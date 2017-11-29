@@ -123,10 +123,10 @@ float snoise(vec3 v)
 // A function for generating grass-looking texture on the up-side of objects.
 vec3 grassOnTop()
 {
-	vec3 up = vec3(0,-1,0);
+	vec3 up = vec3(0,1,0);
 
-	vec3 brown = vec3(0.7, 0.5, 0.3) * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
-	vec3 green = vec3(0.3, 0.8, 0.3) * (snoise(newPos * 5) / 8 + 0.75); 
+	vec3 brown = vec3(0.9, 0.7, 0.5);// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
+	vec3 green = vec3(0.5, 1.0, 0.5);// * (snoise(newPos * 5) / 8 + 0.75); 
 
 	float picker = smoothstep(0.55, 0.75, (dot(newNormal, up) / 2.0) + 0.5f);
 
@@ -161,5 +161,5 @@ void main()
 	
 	// Mix
 	shade = 0.7*diffuse + 0.5*specular + 0.3*ambient;
-	outColor = vec4(shade * color + 0.6 * clear_color, 1.0);
+	outColor = vec4(shade * color, 1.0);
 } 
