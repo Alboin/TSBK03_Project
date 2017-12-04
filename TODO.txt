@@ -4,34 +4,19 @@ Textur - ändra textur/färg beroende på normal? Görs enklast i shader. Kan no
 
 openmp till triangel-generering, mät tid före och efter implementation.
 
-1. Skapa disjoint mesh, alla positioner är i int (x,y,z)
+Lägg till någon slags ladd-tid för hur lång tid det är kvar, likt raytracern.
 
-gör en map[x][y][z] = polygon för varje vertex
+Tiden försöker skrivas ut parallellt nu, det blir inte bra. Fixa det eller ta bort.
 
-skapa en vector<ivec3> och initiera alla till ivec3(-1,-1,-1) (resize(#vertices / 3))
-
-loopa igenom map:en, för varje element:
-	lägg till vertex:en i vertex-vectorn
-	lägg till indexet som den fick i vertex-vectorn i index-vectorn på en plats i 		vec3 där det är -1.
-
-PASS 1
-Skapa vertices utan att skala om allt. För varje vertex, lägg till dess triangel-index i map:en vertexTriangle[x][y][z] = pair<id1, id2>
-
-PASS 2
-Gå igenom alla värden i vertexTriangle och där samma vertex (egentligen samma vertex-pos) används till två trianglar, lägg till id:t på den vertex som ska tas bort i en lista, och byt sedan så att båda trianglarna innehåller samma vertex med samma id. 
-
-PASS 3 (kanske kan skippas? kommer ju ta extra minne men kanske är värt det istället för en massa extra beräkningar?)
-Gå igenom listan med vertices som skall tas bort, när en vertex tas bort,  
-
-PASS 4
-Gå igenom alla vertices och skala om till rätt position.
+Gör så att createTriangle-funktionen lägger till vertices/normaler/indices i vectorer som skickas med, och sedan lägger till värdena i dessa till huvud-vektorn när loopen är slut.
 
 
 
-varje voxel får ett id = x + y * _dim + z * _dim * _dim
 
-varje vertex förknippas med ett voxel-id
-
+ide till gradient-generering:
+https://www.csee.umbc.edu/~ebert/693/THu/dividingcubes.html
+ide som inte användes:
+https://en.wikipedia.org/wiki/Sobel_operator
 
 
 

@@ -13,7 +13,7 @@ Window::Window(GLFWwindow* &window, int W, int H) : width(W), height(H)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(W, H, "Swag", NULL, NULL);
+    window = glfwCreateWindow(W, H, "Loading...", NULL, NULL);
     if (window == NULL)
     {
         fprintf(stderr, "Failed to open GLFW window. ");

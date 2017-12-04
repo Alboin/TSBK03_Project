@@ -62,12 +62,14 @@ int main(int argc, const char * argv[])
 	if(argc > 1 && atof(argv[2]) > 0.05)
 		gridSize = atof(argv[2]);
 
+	float startTime = glfwGetTime();
 	// Create data-volume
 	VoxelData volume(gridDimension, gridSize);
 	volume.generateData();
 	volume.generateTriangles(0.5f);
 	volume.getInfo(false, false);
-	
+	float timeElapsed = glfwGetTime() - startTime;
+	std::cout << "\nTotal time elapsed: " << timeElapsed << " seconds" << std::endl;
 
 	do
 	{

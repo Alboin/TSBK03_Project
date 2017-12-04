@@ -4,6 +4,7 @@
 #include <math.h>
 #include <iostream>
 #include <map>
+#include <omp.h>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -34,8 +35,6 @@ private:
     const glm::ivec3 getPosition(const unsigned v, unsigned x, unsigned y, unsigned z) const;
     const glm::vec3 getWorldPosition(const unsigned x, const unsigned y, const unsigned z) const;
     
-    void calculateNormals();
-
     void createVBO();
     void createBuffers();
 
@@ -56,6 +55,10 @@ private:
     std::vector<glm::vec3> _vertices;
     std::vector<glm::vec3> _normals;
     std::vector<glm::ivec3> _indices;
+
+    // Lock for writing vertex/normal and indices in parallel
+    omp_lock_t writelock;
+    omp_lock_t writelockIndices;
 
     std::vector<glm::vec3> _VBOarray;
 

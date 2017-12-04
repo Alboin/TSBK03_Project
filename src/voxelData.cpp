@@ -10,6 +10,10 @@ std::ostream& operator<<(std::ostream& os, const glm::vec3 &v)
 VoxelData::VoxelData(const unsigned dim, const float gridSize, const glm::vec3 gridCenter)
 : _dim(dim), _gridSize(gridSize), _gridCenter(gridCenter), _table(LookupTable())
 {
+    omp_init_lock(&writelock);
+    omp_init_lock(&writelockIndices);
+
+    std::cout << "Allocating memory... ";
     // Resize data-holder to the given dimensions.
     _data.resize(dim);
     for(unsigned i = 0; i < dim; i++)
@@ -20,11 +24,12 @@ VoxelData::VoxelData(const unsigned dim, const float gridSize, const glm::vec3 g
             _data[i][j].resize(dim);
         }
     }
-
+    std::cout << "done!" << std::endl;
 }
 
 void VoxelData::generateData(const unsigned seed)
 {
+    #pragma omp parallel for
     // Fill voxels with test-data, distance to center of volume.
     for(unsigned x = 0; x < _dim; x++)
     {
@@ -55,12 +60,16 @@ void VoxelData::generateData(const unsigned seed)
                 // _data[x][y][z] = sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
             }
         }
+        
+        if(omp_get_thread_num() == 0)
+            std::cout << "Generating data " << (int)(((float)x * omp_get_num_threads() / (float)_dim) * 100 + 1) << "%" << std::flush << "       \r";        
     }
-
+    std::cout << std::endl;
 }
 
 void VoxelData::getInfo(bool showdata, bool printvertices, bool printnormals) const
 {
+    std::cout << std::endl;
     if(showdata)
         for(unsigned x = 0; x < _dim; x++)
         {
@@ -92,26 +101,29 @@ void VoxelData::generateTriangles(const float isovalue)
 {
     _isovalue = isovalue;
 
+    #pragma omp parallel for        
     // Create triangles from the voxel data and the current isovalue.
     // Loop over all cubes in the volume.
-	for (unsigned x = 0; x < _dim - 1; x++)
-		for (unsigned y = 0; y < _dim - 1; y++)
-			for (unsigned z = 0; z < _dim - 1; z++)
-			{
-				unsigned triangleConfiguration = 0;
+    for (unsigned x = 0; x < _dim - 1; x++)
+    {
+        for (unsigned y = 0; y < _dim - 1; y++)
+        {
+            for (unsigned z = 0; z < _dim - 1; z++)
+            {
+                unsigned triangleConfiguration = 0;
 
-				// Compare the datapoints in one cube to the threshold.
-				if (_data[x][y][z] > isovalue) triangleConfiguration |= 1;
-				if (_data[x][y+1][z] > isovalue) triangleConfiguration |= 2;
-				if (_data[x+1][y+1][z] > isovalue) triangleConfiguration |= 4;
-				if (_data[x+1][y][z] > isovalue) triangleConfiguration |= 8;
+                // Compare the datapoints in one cube to the threshold.
+                if (_data[x][y][z] > isovalue) triangleConfiguration |= 1;
+                if (_data[x][y+1][z] > isovalue) triangleConfiguration |= 2;
+                if (_data[x+1][y+1][z] > isovalue) triangleConfiguration |= 4;
+                if (_data[x+1][y][z] > isovalue) triangleConfiguration |= 8;
 
-				if (_data[x][y][z+1] > isovalue) triangleConfiguration |= 16;
+                if (_data[x][y][z+1] > isovalue) triangleConfiguration |= 16;
                 if (_data[x][y+1][z+1] > isovalue) triangleConfiguration |= 32;
                 if (_data[x+1][y+1][z+1] > isovalue) triangleConfiguration |= 64;
                 if (_data[x+1][y][z+1] > isovalue) triangleConfiguration |= 128;
 
-				// Add vertices at the necessary edges, at the correct positions.
+                // Add vertices at the necessary edges, at the correct positions.
                 for(unsigned n = 0; n < 16 && _table.triangleTable[triangleConfiguration][n] != -1; n += 3)
                 {
                     unsigned e1 = _table.triangleTable[triangleConfiguration][n];
@@ -121,8 +133,13 @@ void VoxelData::generateTriangles(const float isovalue)
                 }
 
             }
+        }
+        if(omp_get_thread_num() == 0)        
+            std::cout << "Generating triangles " << (int)(((float)x * omp_get_num_threads() / (float)_dim) * 100 + 1) << "%" << std::flush << "       \r";
+        
+    }
+    std::cout << std::endl;    
             
-    //calculateNormals();
     createVBO();
     createBuffers();
 }
@@ -131,6 +148,9 @@ void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsi
 {
 
     unsigned edges[] = {e1, e2, e3};
+
+    std::vector<glm::vec3> tempVert;
+    std::vector<glm::vec3> tempNormal;
 
     // Loop through the three edges.
     for(unsigned i = 0; i < 3; i++)
@@ -166,7 +186,6 @@ void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsi
         
         // Center the vertex (so that the whole grid is centered around origo) and add it to the array.
         glm::vec3 center = (_gridCenter + glm::vec3(0.5f, 0.5f, 0.5f)) * _gridSize;
-        _vertices.push_back(interpolatedPos - center);
 
         glm::vec3 normal = glm::vec3(0);
         // Calculate normal from a coarse estimation of the gradient
@@ -185,11 +204,18 @@ void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsi
                     normal += glm::vec3(dx, dy, dz) * _data[x2_clamped][y2_clamped][z2_clamped];                                            
                 }
 
-        _normals.push_back(glm::normalize(normal));
-        
+        tempVert.push_back(interpolatedPos - center);
+        tempNormal.push_back(normal);
     }
 
-    _indices.push_back(glm::ivec3(_vertices.size() - 3, _vertices.size() - 2, _vertices.size() - 1));
+    #pragma omp critical
+    {
+        _vertices.insert(_vertices.end(), tempVert.begin(), tempVert.end());
+        _normals.insert(_normals.end(), tempNormal.begin(), tempNormal.end());
+    
+        _indices.push_back(glm::ivec3(_vertices.size() - 3, _vertices.size() - 2, _vertices.size() - 1));
+        
+    }
 }
 
 const glm::ivec3 VoxelData::getPosition(const unsigned v, unsigned x, unsigned y, unsigned z) const
@@ -208,21 +234,6 @@ const glm::vec3 VoxelData::getWorldPosition(const unsigned x, const unsigned y, 
 {
     glm::vec3 pos = (glm::vec3(x,y,z) * (1.0f / (float)_dim)) * _gridSize;
     return pos - _gridCenter;
-}
-
-void VoxelData::calculateNormals()
-{
-    _normals.resize(_vertices.size());
-    for(unsigned i = 0; i < _indices.size(); i++)
-    {
-        glm::vec3 a = _vertices[_indices[i].y] - _vertices[_indices[i].x];
-        glm::vec3 b = _vertices[_indices[i].z] - _vertices[_indices[i].x];
-        glm::vec3 normal = glm::normalize(glm::cross(a, b));
-
-        _normals[_indices[i].x] = normal;
-        _normals[_indices[i].y] = normal;
-        _normals[_indices[i].z] = normal;
-    }
 }
 
 void VoxelData::draw() const
