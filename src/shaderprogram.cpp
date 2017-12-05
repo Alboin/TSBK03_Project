@@ -163,7 +163,7 @@ void ShaderProgram::updateCommonUniforms(MouseRotator rotator, float width, floa
 	
 	glm::mat4 VRotX = glm::rotate(M, (rotator.phi), glm::vec3(0.0f, 1.0f, 0.0f)); //Rotation about y-axis
 	glm::mat4 VRotY = glm::rotate(M, (rotator.theta), glm::vec3(1.0f, 0.0f, 0.0f)); //Rotation about x-axis
-	glm::vec4 camPos = glm::vec4(rotator.transX, 0.0f, 10.0f + rotator.zoom, 1.0f);
+	glm::vec4 camPos = glm::vec4(rotator.transX, 0.0f, 80.0f + rotator.zoom, 1.0f);
 	//glm::mat4 tests = glm::translate(M, glm::vec3(camPos) + glm::vec3(rotator.transX, rotator.transX, 0.0));
 	camPos = VRotX * VRotY * camPos;
 	glm::vec3 scene_center(0.0f, 0.0f, 0.0f);

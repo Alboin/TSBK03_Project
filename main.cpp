@@ -40,7 +40,7 @@ int main(int argc, const char * argv[])
 
 	// Define meshes
 	Quad quad = Quad();
-	Sphere sphere = Sphere(15, 15, 0.5f);
+	//Sphere sphere = Sphere(15, 15, 0.5f);
 
 
 	GLint screenLoc; 
@@ -57,19 +57,28 @@ int main(int argc, const char * argv[])
 	// Get user input on grid parameters
 	int gridDimension = 100;
 	float gridSize = 0.5;
-	if(argc > 0 && atof(argv[1]) > 0)
+	float isoValue = 0.5;
+
+	if(argc > 1 && atof(argv[1]) > 0)
 		gridDimension = atof(argv[1]);
-	if(argc > 1 && atof(argv[2]) > 0.05)
+	if(argc > 2 && atof(argv[2]) > 0.05)
 		gridSize = atof(argv[2]);
+	if(argc > 3 && atof(argv[3]))
+		isoValue = atof(argv[3]);
 
 	float startTime = glfwGetTime();
 	// Create data-volume
 	VoxelData volume(gridDimension, gridSize);
 	volume.generateData();
-	volume.generateTriangles(0.5f);
-	volume.getInfo(false, false);
+	volume.generateTriangles(isoValue);
+	//volume.getInfo(false, false);
+
+	VoxelData volume2(gridDimension, gridSize, glm::vec3(gridSize/2, 0, 0));
+	volume2.generateData();
+	volume2.generateTriangles(isoValue);
+
 	float timeElapsed = glfwGetTime() - startTime;
-	std::cout << "\nTotal time elapsed: " << timeElapsed << " seconds" << std::endl;
+	std::cout << "\nTime elapsed: " << timeElapsed << " seconds" << std::endl;
 
 	do
 	{
@@ -93,8 +102,9 @@ int main(int argc, const char * argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		phong_shader();
 		phong_shader.updateCommonUniforms(rotator, W, H, glfwGetTime(), clear_color);
-		sphere.draw();
+		//sphere.draw();
 		volume.draw();
+		volume2.draw();
 
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

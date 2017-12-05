@@ -121,8 +121,15 @@ float snoise(vec3 v)
 
 void main() {
 	
-	newPos = position + (normal * snoise(position) * 0.1) + (normal * snoise(position * 0.5 + time / 2.0) * 0.2);
-	newNormal = normal;
+  float scale = 0.1;
+
+  float n1 = snoise(position * 0.5) * 0.5;
+  float n2 = snoise(position * 1.0) * scale;
+  float n3 = snoise(position * 2.0) * scale;
+
+	//newPos = position + (normal * n1) + (normal * n2) + (normal *n3);
+  newPos = position + (normal * snoise(position + time / 3.0) * 0.1) + (normal * snoise(position * 0.5 + time / 2.0) * 0.1);
+	newNormal = normal;//normalize(vec3(snoise(position * 6.1), snoise(position * 6), snoise(position * 6.2)) / 4.0 + normal * 2);
 	texCoord = uv;
 
     gl_Position = P * MV * vec4(newPos, 1.0f);

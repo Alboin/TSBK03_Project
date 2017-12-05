@@ -1,12 +1,9 @@
 Textur - ändra textur/färg beroende på normal? Görs enklast i shader. Kan nog lägga till något slags noise här också?
 
-Ändra funktionen för att skapa ett nytt voxel-grid så att den tar in bara en dimension (som sätts till alla sen) och en cell-size, för att bestämma storleken på en cell, eller storleken på hela grid:et.
-
 openmp till triangel-generering, mät tid före och efter implementation.
+11 sekunder innan 5 sekunder efter.
 
 Lägg till någon slags ladd-tid för hur lång tid det är kvar, likt raytracern.
-
-Tiden försöker skrivas ut parallellt nu, det blir inte bra. Fixa det eller ta bort.
 
 Gör så att createTriangle-funktionen lägger till vertices/normaler/indices i vectorer som skickas med, och sedan lägger till värdena i dessa till huvud-vektorn när loopen är slut.
 

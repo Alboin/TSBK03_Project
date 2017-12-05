@@ -14,14 +14,14 @@ VoxelData::VoxelData(const unsigned dim, const float gridSize, const glm::vec3 g
     omp_init_lock(&writelockIndices);
 
     std::cout << "Allocating memory... ";
-    // Resize data-holder to the given dimensions.
+    // Resize data-holder to the given dimensions and initiate it with 0's.
     _data.resize(dim);
     for(unsigned i = 0; i < dim; i++)
     {
         _data[i].resize(dim);
         for(unsigned j = 0; j < dim; j++)
         {
-            _data[i][j].resize(dim);
+            _data[i][j].resize(dim, 0.0);
         }
     }
     std::cout << "done!" << std::endl;
@@ -29,6 +29,8 @@ VoxelData::VoxelData(const unsigned dim, const float gridSize, const glm::vec3 g
 
 void VoxelData::generateData(const unsigned seed)
 {
+    float startTime = glfwGetTime();
+    
     #pragma omp parallel for
     // Fill voxels with test-data, distance to center of volume.
     for(unsigned x = 0; x < _dim; x++)
@@ -43,11 +45,27 @@ void VoxelData::generateData(const unsigned seed)
                 //else
                 //   _data[x][y][z] = 0.0;
 
-                float noiseScale = 0.15;
-
-                glm::vec3 pos = getWorldPosition(x,y,z) * noiseScale;
+                float noiseScale = 0.3;
                 
-                _data[x][y][z] = snoise3(pos.x,pos.y,pos.z);
+                for(int octave = 0; octave < 8; octave++)
+                {
+                    glm::vec3 pos = getWorldPosition(x,y,z) * (noiseScale / (float)pow(1.5, octave));
+                    float noise = snoise3(pos.x, pos.y, pos.z) * (1.0 / (float)pow(1.5, octave));
+                    _data[x][y][z] += noise;                    
+                    //std::cout << (1.0 / (float)pow(2.0, octave)) << " | ";
+                }
+                
+                // glm::vec3 pos1 = getWorldPosition(x,y,z) * noiseScale;
+                // glm::vec3 pos2 = getWorldPosition(x,y,z) * (noiseScale / 2.0f);
+                // glm::vec3 pos3 = getWorldPosition(x,y,z) * (noiseScale / 4.0f);
+                
+                // float noise1 = snoise3(pos1.x, pos1.y, pos1.z);
+                // float noise2 = snoise3(pos2.x, pos2.y, pos2.z) * 0.5;
+                // float noise3 = snoise3(pos3.x, pos3.y, pos3.z) * 0.25;
+                
+                // _data[x][y][z] = noise1 + noise2 + noise3;
+
+
 
                 // if(rand() % 100 < 10)
                 //     _data[x][y][z] = 1.0;
@@ -62,7 +80,8 @@ void VoxelData::generateData(const unsigned seed)
         }
         
         if(omp_get_thread_num() == 0)
-            std::cout << "Generating data " << (int)(((float)x * omp_get_num_threads() / (float)_dim) * 100 + 1) << "%" << std::flush << "       \r";        
+            std::cout << "Generating data " << (int)(((float)(x+1) * (float)omp_get_num_threads() / (float)_dim) * 100) << "%"
+            << " on " << omp_get_num_threads() << " threads. Running time: " << glfwGetTime() - startTime << " seconds." << std::flush << "       \r";        
     }
     std::cout << std::endl;
 }
@@ -100,6 +119,7 @@ void VoxelData::getInfo(bool showdata, bool printvertices, bool printnormals) co
 void VoxelData::generateTriangles(const float isovalue)
 {
     _isovalue = isovalue;
+    float startTime = glfwGetTime();
 
     #pragma omp parallel for        
     // Create triangles from the voxel data and the current isovalue.
@@ -135,7 +155,8 @@ void VoxelData::generateTriangles(const float isovalue)
             }
         }
         if(omp_get_thread_num() == 0)        
-            std::cout << "Generating triangles " << (int)(((float)x * omp_get_num_threads() / (float)_dim) * 100 + 1) << "%" << std::flush << "       \r";
+            std::cout << "Generating triangles " << (int)(((float)(x+1) * (float)omp_get_num_threads() / (float)_dim) * 100) << "%"
+            << " on " << omp_get_num_threads() << " threads. Running time: " << glfwGetTime() - startTime << " seconds." << std::flush << "       \r";
         
     }
     std::cout << std::endl;    
@@ -178,14 +199,14 @@ void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsi
         float d2 = _data[pos2.x][pos2.y][pos2.z];
 
         // "Normalize" the positions so that the maximum value is 1 and minimum 0.
-        glm::vec3 normalizedPos1 = ((glm::vec3)pos1 * (1.0f / (float)_dim)) * _gridSize; //glm::vec3((float)pos1.x / (float)_dim, (float)pos1.y / (float)_dim, (float)pos1.z / (float)_dim) * _gridSize;
-        glm::vec3 normalizedPos2 = ((glm::vec3)pos2 * (1.0f / (float)_dim)) * _gridSize; //glm::vec3((float)pos2.x / (float)_dim, (float)pos2.y / (float)_dim, (float)pos2.z / (float)_dim) * _gridSize;
+        glm::vec3 normalizedPos1 = ((glm::vec3)pos1 * (1.0f / (float)_dim)) * _gridSize;
+        glm::vec3 normalizedPos2 = ((glm::vec3)pos2 * (1.0f / (float)_dim)) * _gridSize;
 
         // Interpolate between them with the given isovalue.
         glm::vec3 interpolatedPos = normalizedPos1 + ((normalizedPos2 - normalizedPos1) * ((_isovalue - d1) / (d2 - d1)));
         
         // Center the vertex (so that the whole grid is centered around origo) and add it to the array.
-        glm::vec3 center = (_gridCenter + glm::vec3(0.5f, 0.5f, 0.5f)) * _gridSize;
+        glm::vec3 center = _gridCenter + (glm::vec3(0.5f, 0.5f, 0.5f)) * _gridSize;
 
         glm::vec3 normal = glm::vec3(0);
         // Calculate normal from a coarse estimation of the gradient

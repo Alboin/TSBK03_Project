@@ -126,7 +126,7 @@ vec3 grassOnTop()
 	vec3 up = vec3(0,1,0);
 
 	vec3 brown = vec3(0.9, 0.7, 0.5);// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
-	vec3 green = vec3(0.5, 1.0, 0.5);// * (snoise(newPos * 5) / 8 + 0.75); 
+	vec3 green = vec3(0.5, 1.0, 0.5);// * (snoise(newPos * 5) / 8 + 0.75) * (snoise(newPos) / 3 + 0.4); 
 
 	float picker = smoothstep(0.55, 0.75, (dot(newNormal, up) / 2.0) + 0.5f);
 

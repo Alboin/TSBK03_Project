@@ -8,7 +8,7 @@
 
 #define GLEW_STATIC
 #include <GL/glew.h>
-
+#include <GLFW/glfw3.h>
 
 #include "glm/glm.hpp"
 #include "lookuptable.h"
@@ -22,7 +22,7 @@ public:
     
     void generateData(const unsigned seed = 0);
 
-    void generateTriangles(const float isovalue);
+    void generateTriangles(const float isovalue = 0.5);
 
     void getInfo(bool showdata = false, bool printvertices = false, bool printnormals = false) const;
 
