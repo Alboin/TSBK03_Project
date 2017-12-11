@@ -45,10 +45,12 @@ int main(int argc, const char * argv[])
 
 	GLint screenLoc; 
 	Framebuffer screenBuffer = Framebuffer(W, H);
+	Framebuffer blurBuffer = Framebuffer(W, H);
 
 	// Define shaders
 	ShaderProgram phong_shader("shaders/phong.vert", "shaders/phong.frag");
 	ShaderProgram screen_shader("shaders/screen.vert", "shaders/screen.frag");
+	ShaderProgram blur_shader("shaders/screen.vert", "shaders/blur.frag");
 
 	// Controls
 	MouseRotator rotator;
@@ -57,6 +59,7 @@ int main(int argc, const char * argv[])
 	// Get user input on grid parameters
 	int gridDimension = 100;
 	float gridSize = 0.5;
+	float noiseScale = 0.1;
 	float isoValue = 0.5;
 
 	if(argc > 1 && atof(argv[1]) > 0)
@@ -64,26 +67,45 @@ int main(int argc, const char * argv[])
 	if(argc > 2 && atof(argv[2]) > 0.05)
 		gridSize = atof(argv[2]);
 	if(argc > 3 && atof(argv[3]))
-		isoValue = atof(argv[3]);
+		noiseScale = atof(argv[3]);
+	if(argc > 4 && atof(argv[4]))
+		isoValue = atof(argv[4]);
 
 	float startTime = glfwGetTime();
-	// Create data-volume
-	VoxelData volume(gridDimension, gridSize);
-	volume.generateData();
-	volume.generateTriangles(isoValue);
-	//volume.getInfo(false, false);
-
-	VoxelData volume2(gridDimension, gridSize, glm::vec3(gridSize/2, 0, 0));
-	volume2.generateData();
-	volume2.generateTriangles(isoValue);
-
+	// Create data-volumes
+	std::vector<VoxelData> volumes;
+	int triangles = 0;
+	for(int i = -2; i <= 2; i++)
+	{
+		for(int j = -2; j <= 2; j++)
+		{
+			glm::vec3 center = glm::vec3((gridSize/2.0) * i, 0.0, (gridSize/2.0) * j);
+			volumes.push_back(VoxelData(gridDimension, gridSize, center));
+			volumes[volumes.size() - 1].generateData(noiseScale);
+			volumes[volumes.size() - 1].generateTriangles(isoValue);
+			triangles += volumes[volumes.size() - 1].getNumberOfTriangles();			
+		}
+	}
 	float timeElapsed = glfwGetTime() - startTime;
+	std::cout << "\nNumber of triangles generated: " << triangles;
 	std::cout << "\nTime elapsed: " << timeElapsed << " seconds" << std::endl;
 
+	// VoxelData volume(gridDimension, gridSize);
+	// volume.generateData();
+	// volume.generateTriangles(isoValue);
+	// volume.getInfo(false, false);
+
+	// VoxelData volume2(gridDimension, gridSize, glm::vec3(gridSize/2, 0, 0));
+	// volume2.generateData();
+	// volume2.generateTriangles(isoValue);
+
+
+	glm::vec3 clear_color = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	w.initFrame();
+	
 	do
 	{
-		w.initFrame();
-		glm::vec3 clear_color = glm::vec3(1.0f, 1.0f, 1.0f);
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, 1.0f);
 		rotator.poll(window);
 		
@@ -97,24 +119,35 @@ int main(int argc, const char * argv[])
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-
+		// Draw to buffer
 		screenBuffer.bindBuffer();
+	
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		phong_shader();
 		phong_shader.updateCommonUniforms(rotator, W, H, glfwGetTime(), clear_color);
 		//sphere.draw();
-		volume.draw();
-		volume2.draw();
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
 
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		screen_shader();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		for(unsigned i = 0; i < volumes.size(); i++)
+			volumes[i].draw();
+		//volume.draw();
+		//volume2.draw();
 
 		screenLoc = glGetUniformLocation(screen_shader, "screenTexture");
 		glUniform1i(screenLoc, 0);
 		glActiveTexture(GL_TEXTURE0);
 		screenBuffer.bindTexture();
+
+		// Draw to blur shader
+		
+
+		// Draw to display
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
+		screen_shader();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 
 		screen_shader.updateCommonUniforms(rotator, W, H, glfwGetTime(), clear_color);
 		quad.draw();

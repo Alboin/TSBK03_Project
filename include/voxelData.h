@@ -20,11 +20,12 @@ public:
     
     VoxelData(const unsigned dim, const float gridSize, const glm::vec3 gridCenter = glm::vec3(0));
     
-    void generateData(const unsigned seed = 0);
+    void generateData(const float noiseScale = 0.1);
 
     void generateTriangles(const float isovalue = 0.5);
 
     void getInfo(bool showdata = false, bool printvertices = false, bool printnormals = false) const;
+    int getNumberOfTriangles() const { return _indices.size(); };
 
     void draw() const;
 

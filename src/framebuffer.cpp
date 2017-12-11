@@ -58,7 +58,7 @@ GLuint Framebuffer::generateAttachmentTexture(GLboolean depth, GLboolean stencil
 	// What enum to use?
 	GLenum attachment_type;
 	if (!depth && !stencil)
-		attachment_type = GL_RGB;
+		attachment_type = GL_RGBA;
 	else if (depth && !stencil)
 		attachment_type = GL_DEPTH_COMPONENT;
 	else if (!depth && stencil)

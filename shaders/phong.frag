@@ -15,6 +15,9 @@ uniform vec2 window_dim;
 uniform sampler2D refractionTexture;
 uniform sampler2D earthTexture;
 
+float nearClip = 0.1;
+float farClip = 100.0;
+
 //
 // Description : Array and textureless GLSL 2D/3D/4D simplex 
 //               noise functions.
@@ -125,8 +128,13 @@ vec3 grassOnTop()
 {
 	vec3 up = vec3(0,1,0);
 
-	vec3 brown = vec3(0.9, 0.7, 0.5);// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
-	vec3 green = vec3(0.5, 1.0, 0.5);// * (snoise(newPos * 5) / 8 + 0.75) * (snoise(newPos) / 3 + 0.4); 
+  float noise1 = (snoise(newPos * 2) * 0.5 + 0.5) * 0.2 + 0.8;
+  float noise2 = (snoise(newPos * 4) * 0.5 + 0.5) * 0.2 + 0.8;
+  float noise3 = (snoise(newPos * 6) * 0.5 + 0.5) * 0.2 + 0.8;
+  float noise4 = (snoise(newPos * 10) * 0.5 + 0.5) * 0.2 + 0.8;
+
+	vec3 brown = vec3(0.9, 0.7, 0.5) * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
+	vec3 green = vec3(0.55, 1.0, 0.55) * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 5) / 8 + 0.75) * (snoise(newPos) / 3 + 0.4); 
 
 	float picker = smoothstep(0.55, 0.75, (dot(newNormal, up) / 2.0) + 0.5f);
 
@@ -157,9 +165,14 @@ void main()
 	specular = dot(r, v);
 	if (specular > 0.0)
 		specular = pow(specular, 50.0);
-	specular = max(specular, 0.0);
+	specular = 0;//max(specular, 0.0);
 	
 	// Mix
 	shade = 0.7*diffuse + 0.5*specular + 0.3*ambient;
-	outColor = vec4(shade * color, 1.0);
+
+  // Get depth.
+  float depth = (2 * nearClip) / (farClip + nearClip - gl_FragCoord.z * (farClip - nearClip));
+
+  vec3 result = shade * color;
+	outColor = vec4(result, depth);//vec4(shade * color, 1.0);
 } 

@@ -27,55 +27,28 @@ VoxelData::VoxelData(const unsigned dim, const float gridSize, const glm::vec3 g
     std::cout << "done!" << std::endl;
 }
 
-void VoxelData::generateData(const unsigned seed)
+void VoxelData::generateData(const float noiseScale)
 {
-    float startTime = glfwGetTime();
+    float startTime = glfwGetTime();    
     
     #pragma omp parallel for
-    // Fill voxels with test-data, distance to center of volume.
+    // Fill voxels with test-data, distance to center of volume.    
     for(unsigned x = 0; x < _dim; x++)
     {
         for(unsigned y = 0; y < _dim; y++)
         {
             for(unsigned z = 0; z < _dim; z++)
             {
-                //if(x == _dim/2 && y == _dim/2 && z == _dim/2)
-                //if(x > _dim /4 && x < 3*_dim/4 && y > _dim /4 && y < 3*_dim/4 && z > _dim /4 && z < 3*_dim/4)
-                //   _data[x][y][z] = 1.0;
-                //else
-                //   _data[x][y][z] = 0.0;
-
-                float noiseScale = 0.3;
+                //Create a plane at y = 0.
+                _data[x][y][z] = (float)(y) / (float)_dim;
                 
-                for(int octave = 0; octave < 8; octave++)
+                for(int octave = 0; octave < 4; octave++)
                 {
-                    glm::vec3 pos = getWorldPosition(x,y,z) * (noiseScale / (float)pow(1.5, octave));
-                    float noise = snoise3(pos.x, pos.y, pos.z) * (1.0 / (float)pow(1.5, octave));
-                    _data[x][y][z] += noise;                    
-                    //std::cout << (1.0 / (float)pow(2.0, octave)) << " | ";
+                    glm::vec3 pos = getWorldPosition(x,y,z) * noiseScale * (float)pow(2, octave);
+                    float noise = snoise3(pos.x, pos.y, pos.z) * 0.25 * (1.0 / (pow(2, octave)));
+
+                    _data[x][y][z] += noise;
                 }
-                
-                // glm::vec3 pos1 = getWorldPosition(x,y,z) * noiseScale;
-                // glm::vec3 pos2 = getWorldPosition(x,y,z) * (noiseScale / 2.0f);
-                // glm::vec3 pos3 = getWorldPosition(x,y,z) * (noiseScale / 4.0f);
-                
-                // float noise1 = snoise3(pos1.x, pos1.y, pos1.z);
-                // float noise2 = snoise3(pos2.x, pos2.y, pos2.z) * 0.5;
-                // float noise3 = snoise3(pos3.x, pos3.y, pos3.z) * 0.25;
-                
-                // _data[x][y][z] = noise1 + noise2 + noise3;
-
-
-
-                // if(rand() % 100 < 10)
-                //     _data[x][y][z] = 1.0;
-                // else
-                //     _data[x][y][z] = 0.0;
-
-                // float a = (float)(x - (_dim / 2)) / (_dim / 2);
-                // float b = (float)(y - (_dim / 2)) / (_dim / 2);
-                // float c = (float)(z - (_dim / 2)) / (_dim / 2);
-                // _data[x][y][z] = sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
             }
         }
         
@@ -259,6 +232,7 @@ const glm::vec3 VoxelData::getWorldPosition(const unsigned x, const unsigned y, 
 
 void VoxelData::draw() const
 {
+    glEnable(GL_CULL_FACE);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
     
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * _VBOarray.size(), &_VBOarray[0], GL_STATIC_DRAW);
