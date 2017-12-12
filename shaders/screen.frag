@@ -21,34 +21,28 @@ void main(void)
 	outColor = vec4(screen.xyz, 1.0);
 	return;
 
-	ivec2 texSize = textureSize(screenTexture, 0);
+	float h = 0.002;
 
-	float radius = 1.0 / depth;
+	float sample1 = texture(screenTexture, texCoord + vec2(h,0)).w;
+	float sample2 = texture(screenTexture, texCoord + vec2(-h,0)).w;
+	float sample3 = texture(screenTexture, texCoord + vec2(0,h)).w;
+	float sample4 = texture(screenTexture, texCoord + vec2(0,-h)).w;
 
-	float dx = (1.0 / texSize.x) * radius;
-	float dy = (1.0 / texSize.y) * radius;
+	float sample5 = texture(screenTexture, texCoord + vec2(2*h,0)).w;
+	float sample6 = texture(screenTexture, texCoord + vec2(-2*h,0)).w;
+	float sample7 = texture(screenTexture, texCoord + vec2(0,2*h)).w;
+	float sample8 = texture(screenTexture, texCoord + vec2(0,-2*h)).w;
 
-	float sample1 = texture(screenTexture, texCoord + vec2(dx,0)).w;
-	float sample2 = texture(screenTexture, texCoord + vec2(-dx,0)).w;
-	float sample3 = texture(screenTexture, texCoord + vec2(0,dy)).w;
-	float sample4 = texture(screenTexture, texCoord + vec2(0,-dy)).w;
 
-	float avgerageDepth = (sample1 + sample2 + sample3 + sample4) * 0.25;
-	
-/*
-	float windowResolution = 1000.0f;
-	float radius = (radiusPixels / windowResolution) / (depth * (5.0f - 0.1f));
-	float sampleLength = radius / nSamples;
-*/
+	float avgerageDepth = (sample1 + sample2 + sample3 + sample4 + sample5 + sample6 + sample7 + sample8) * 0.125;
 
 	float occlusion = depth - avgerageDepth;
 
-	occlusion = clamp(occlusion, 0.0, 0.001);
+	//occlusion = clamp(occlusion, 0.0, 1.0);
 	
-	// outColor = vec4(0.5 + sin(time)*0.5, 0.8, 0.5, 1.0);
-	outColor = vec4(vec3(1.0 - occlusion * 100), 1.0);
-
-
+	//outColor = vec4(vec3(1.0 - occlusion * 1000), 1.0);
+	//outColor = vec4(screen.xyz * (1.0 - occlusion * 300), 1.0);
+	//outColor = vec4(vec3(1.0 -  depth), 1.0);
 /*
 	float nSamples = 10;
 	float radiusPixels = 100;

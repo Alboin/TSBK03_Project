@@ -12,10 +12,13 @@
 #include "sphere.h"
 #include "voxelData.h"
 
-#define W 800
-#define H 800
+#define W 1000
+#define H 1000
+
+// Run with ./main gridDimension gridSize noiseScale isoValue
 
 bool WIREFRAME = false;
+bool BOUNDINGBOXES = false;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
@@ -23,6 +26,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		WIREFRAME = false;
 	else if(key == GLFW_KEY_W && action == GLFW_PRESS)
 		WIREFRAME = true;
+
+	if (key == GLFW_KEY_B && action == GLFW_PRESS && BOUNDINGBOXES)
+		BOUNDINGBOXES = false;
+	else if(key == GLFW_KEY_B && action == GLFW_PRESS)
+		BOUNDINGBOXES = true;
 	
 }
 
@@ -72,33 +80,29 @@ int main(int argc, const char * argv[])
 		isoValue = atof(argv[4]);
 
 	float startTime = glfwGetTime();
+
 	// Create data-volumes
 	std::vector<VoxelData> volumes;
 	int triangles = 0;
-	for(int i = -2; i <= 2; i++)
+	int cellGrid = 5, cellNumber = 0;
+	std::cout << std::endl;
+	for(int i = -cellGrid/2; i <= cellGrid/2; i++)
 	{
-		for(int j = -2; j <= 2; j++)
+		for(int j = -cellGrid/2; j <= cellGrid/2; j++)
 		{
-			glm::vec3 center = glm::vec3((gridSize/2.0) * i, 0.0, (gridSize/2.0) * j);
+			glm::vec3 center = glm::vec3((gridSize) * i, 0.0, (gridSize) * j);
 			volumes.push_back(VoxelData(gridDimension, gridSize, center));
 			volumes[volumes.size() - 1].generateData(noiseScale);
 			volumes[volumes.size() - 1].generateTriangles(isoValue);
-			triangles += volumes[volumes.size() - 1].getNumberOfTriangles();			
+			triangles += volumes[volumes.size() - 1].getNumberOfTriangles();
+			cellNumber++;
+			std::cout << "Generating cells " << cellNumber << " of " << pow(cellGrid,2) << std::flush << "\r";
 		}
 	}
+
 	float timeElapsed = glfwGetTime() - startTime;
 	std::cout << "\nNumber of triangles generated: " << triangles;
 	std::cout << "\nTime elapsed: " << timeElapsed << " seconds" << std::endl;
-
-	// VoxelData volume(gridDimension, gridSize);
-	// volume.generateData();
-	// volume.generateTriangles(isoValue);
-	// volume.getInfo(false, false);
-
-	// VoxelData volume2(gridDimension, gridSize, glm::vec3(gridSize/2, 0, 0));
-	// volume2.generateData();
-	// volume2.generateTriangles(isoValue);
-
 
 	glm::vec3 clear_color = glm::vec3(1.0f, 1.0f, 1.0f);
 
@@ -130,9 +134,15 @@ int main(int argc, const char * argv[])
 		glDisable(GL_ALPHA_TEST);
 
 		for(unsigned i = 0; i < volumes.size(); i++)
+		{
 			volumes[i].draw();
-		//volume.draw();
-		//volume2.draw();
+			if(BOUNDINGBOXES)
+			{
+				glLineWidth(3.0);				
+				volumes[i].drawBoundingBox();
+				glLineWidth(1.0);								
+			}
+		}
 
 		screenLoc = glGetUniformLocation(screen_shader, "screenTexture");
 		glUniform1i(screenLoc, 0);

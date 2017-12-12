@@ -16,7 +16,7 @@ uniform sampler2D refractionTexture;
 uniform sampler2D earthTexture;
 
 float nearClip = 0.1;
-float farClip = 100.0;
+float farClip = 1000.0;
 
 //
 // Description : Array and textureless GLSL 2D/3D/4D simplex 
@@ -128,13 +128,14 @@ vec3 grassOnTop()
 {
 	vec3 up = vec3(0,1,0);
 
+  float noise0 = (snoise(newPos * 1) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise1 = (snoise(newPos * 2) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise2 = (snoise(newPos * 4) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise3 = (snoise(newPos * 6) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise4 = (snoise(newPos * 10) * 0.5 + 0.5) * 0.2 + 0.8;
 
-	vec3 brown = vec3(0.9, 0.7, 0.5) * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
-	vec3 green = vec3(0.55, 1.0, 0.55) * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 5) / 8 + 0.75) * (snoise(newPos) / 3 + 0.4); 
+	vec3 brown = vec3(0.9, 0.7, 0.5) * noise0 * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
+	vec3 green = vec3(0.55, 1.0, 0.55) * noise0 * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 5) / 8 + 0.75) * (snoise(newPos) / 3 + 0.4); 
 
 	float picker = smoothstep(0.55, 0.75, (dot(newNormal, up) / 2.0) + 0.5f);
 

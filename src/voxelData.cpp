@@ -13,36 +13,65 @@ VoxelData::VoxelData(const unsigned dim, const float gridSize, const glm::vec3 g
     omp_init_lock(&writelock);
     omp_init_lock(&writelockIndices);
 
-    std::cout << "Allocating memory... ";
+    //std::cout << "Allocating memory... ";
     // Resize data-holder to the given dimensions and initiate it with 0's.
-    _data.resize(dim);
-    for(unsigned i = 0; i < dim; i++)
+    _data.resize(dim + 1);
+    for(unsigned i = 0; i < dim + 1; i++)
     {
-        _data[i].resize(dim);
-        for(unsigned j = 0; j < dim; j++)
+        _data[i].resize(dim + 1);
+        for(unsigned j = 0; j < dim + 1; j++)
         {
-            _data[i][j].resize(dim, 0.0);
+            _data[i][j].resize(dim + 1, 0.0);
         }
     }
-    std::cout << "done!" << std::endl;
+    //std::cout << "done!" << std::endl;
+
+    _boundingBoxVertices.push_back(glm::vec3(-gridSize/2.0, -gridSize/2.0, -gridSize/2.0) - gridCenter);
+    _boundingBoxVertices.push_back(glm::vec3(-gridSize/2.0, -gridSize/2.0, gridSize/2.0) - gridCenter);
+    _boundingBoxVertices.push_back(glm::vec3(-gridSize/2.0, gridSize/2.0, -gridSize/2.0) - gridCenter);
+    _boundingBoxVertices.push_back(glm::vec3(-gridSize/2.0, gridSize/2.0, gridSize/2.0) - gridCenter);
+    _boundingBoxVertices.push_back(glm::vec3(gridSize/2.0, -gridSize/2.0, -gridSize/2.0) - gridCenter);
+    _boundingBoxVertices.push_back(glm::vec3(gridSize/2.0, -gridSize/2.0, gridSize/2.0) - gridCenter);
+    _boundingBoxVertices.push_back(glm::vec3(gridSize/2.0, gridSize/2.0, -gridSize/2.0) - gridCenter);
+    _boundingBoxVertices.push_back(glm::vec3(gridSize/2.0, gridSize/2.0, gridSize/2.0) - gridCenter);
+    
+    _boundingBoxIndices.push_back(0);
+    _boundingBoxIndices.push_back(1);
+    _boundingBoxIndices.push_back(5);
+    _boundingBoxIndices.push_back(7);
+    _boundingBoxIndices.push_back(3);
+    _boundingBoxIndices.push_back(2);
+    _boundingBoxIndices.push_back(6);
+    _boundingBoxIndices.push_back(4);
+    _boundingBoxIndices.push_back(0);
+    _boundingBoxIndices.push_back(4);
+    _boundingBoxIndices.push_back(5);
+    _boundingBoxIndices.push_back(1);
+    _boundingBoxIndices.push_back(3);
+    _boundingBoxIndices.push_back(7);
+    _boundingBoxIndices.push_back(6);
+    _boundingBoxIndices.push_back(2);
+    _boundingBoxIndices.push_back(0);
+
+    
 }
 
 void VoxelData::generateData(const float noiseScale)
 {
-    float startTime = glfwGetTime();    
+    //float startTime = glfwGetTime();    
     
     #pragma omp parallel for
     // Fill voxels with test-data, distance to center of volume.    
-    for(unsigned x = 0; x < _dim; x++)
+    for(unsigned x = 0; x < _dim + 1; x++)
     {
-        for(unsigned y = 0; y < _dim; y++)
+        for(unsigned y = 0; y < _dim + 1; y++)
         {
-            for(unsigned z = 0; z < _dim; z++)
+            for(unsigned z = 0; z < _dim + 1; z++)
             {
                 //Create a plane at y = 0.
-                _data[x][y][z] = (float)(y) / (float)_dim;
+                _data[x][y][z] = (float)(y) / (float)(_dim + 1);
                 
-                for(int octave = 0; octave < 4; octave++)
+                for(int octave = 0; octave < 8; octave++)
                 {
                     glm::vec3 pos = getWorldPosition(x,y,z) * noiseScale * (float)pow(2, octave);
                     float noise = snoise3(pos.x, pos.y, pos.z) * 0.25 * (1.0 / (pow(2, octave)));
@@ -52,22 +81,23 @@ void VoxelData::generateData(const float noiseScale)
             }
         }
         
-        if(omp_get_thread_num() == 0)
+        /*if(omp_get_thread_num() == 0)
             std::cout << "Generating data " << (int)(((float)(x+1) * (float)omp_get_num_threads() / (float)_dim) * 100) << "%"
             << " on " << omp_get_num_threads() << " threads. Running time: " << glfwGetTime() - startTime << " seconds." << std::flush << "       \r";        
+        */
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
 }
 
 void VoxelData::getInfo(bool showdata, bool printvertices, bool printnormals) const
 {
     std::cout << std::endl;
     if(showdata)
-        for(unsigned x = 0; x < _dim; x++)
+        for(unsigned x = 0; x < _dim + 1; x++)
         {
-            for(unsigned y = 0; y < _dim; y++)
+            for(unsigned y = 0; y < _dim + 1; y++)
             {
-                for(unsigned z = 0; z < _dim; z++)
+                for(unsigned z = 0; z < _dim + 1; z++)
                 {
                     std::cout << _data[x][y][z] << ", ";
                 }
@@ -92,16 +122,16 @@ void VoxelData::getInfo(bool showdata, bool printvertices, bool printnormals) co
 void VoxelData::generateTriangles(const float isovalue)
 {
     _isovalue = isovalue;
-    float startTime = glfwGetTime();
+    //float startTime = glfwGetTime();
 
     #pragma omp parallel for        
     // Create triangles from the voxel data and the current isovalue.
     // Loop over all cubes in the volume.
-    for (unsigned x = 0; x < _dim - 1; x++)
+    for (unsigned x = 0; x < _dim; x++)
     {
-        for (unsigned y = 0; y < _dim - 1; y++)
+        for (unsigned y = 0; y < _dim; y++)
         {
-            for (unsigned z = 0; z < _dim - 1; z++)
+            for (unsigned z = 0; z < _dim; z++)
             {
                 unsigned triangleConfiguration = 0;
 
@@ -127,12 +157,12 @@ void VoxelData::generateTriangles(const float isovalue)
 
             }
         }
-        if(omp_get_thread_num() == 0)        
+        /*if(omp_get_thread_num() == 0)        
             std::cout << "Generating triangles " << (int)(((float)(x+1) * (float)omp_get_num_threads() / (float)_dim) * 100) << "%"
             << " on " << omp_get_num_threads() << " threads. Running time: " << glfwGetTime() - startTime << " seconds." << std::flush << "       \r";
-        
+        */
     }
-    std::cout << std::endl;    
+    //std::cout << std::endl;    
             
     createVBO();
     createBuffers();
@@ -179,7 +209,7 @@ void VoxelData::createTriangle(unsigned e1, unsigned e2, unsigned e3, const unsi
         glm::vec3 interpolatedPos = normalizedPos1 + ((normalizedPos2 - normalizedPos1) * ((_isovalue - d1) / (d2 - d1)));
         
         // Center the vertex (so that the whole grid is centered around origo) and add it to the array.
-        glm::vec3 center = _gridCenter + (glm::vec3(0.5f, 0.5f, 0.5f)) * _gridSize;
+        glm::vec3 center = _gridCenter + glm::vec3(0.5f, 0.5f, 0.5f) * _gridSize;
 
         glm::vec3 normal = glm::vec3(0);
         // Calculate normal from a coarse estimation of the gradient
@@ -244,6 +274,22 @@ void VoxelData::draw() const
     glBindVertexArray(0);
 }
 
+void VoxelData::drawBoundingBox() const
+{
+    glDisable(GL_CULL_FACE);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_b);
+    
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * _boundingBoxVertices.size(), &_boundingBoxVertices[0], GL_STATIC_DRAW);
+    glBindVertexArray(VAO_b);
+
+    glDrawElements(GL_LINES, sizeof(unsigned) * _boundingBoxIndices.size(), GL_UNSIGNED_INT, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+}
+
+
 
 void VoxelData::createVBO()
 {
@@ -278,6 +324,28 @@ void VoxelData::createBuffers()
 	//Vertex color attribute
 	//glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(glm::vec3), (GLvoid*)(2 * sizeof(glm::vec3)));
 	//glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    
+
+    // Do the same for bounding box
+    glGenVertexArrays(1, &VAO_b);
+	glGenBuffers(1, &VBO_b);
+	glGenBuffers(1, &EBO_b);
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+	glBindVertexArray(VAO_b);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_b);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * _boundingBoxVertices.size(), &_boundingBoxVertices[0], GL_STATIC_DRAW);
+
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_b);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned) * _boundingBoxIndices.size(), &_boundingBoxIndices[0], GL_STATIC_DRAW);
+
+	//Vertex position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(glm::vec3), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);

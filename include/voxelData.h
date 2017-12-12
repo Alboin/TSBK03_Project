@@ -28,6 +28,7 @@ public:
     int getNumberOfTriangles() const { return _indices.size(); };
 
     void draw() const;
+    void drawBoundingBox() const;
 
 private:
 
@@ -57,13 +58,20 @@ private:
     std::vector<glm::vec3> _normals;
     std::vector<glm::ivec3> _indices;
 
+    std::vector<glm::vec3> _VBOarray;
+    GLuint VBO, VAO, EBO;
+
+    // Data structures for the bounding box.
+    std::vector<glm::vec3> _boundingBoxVertices;
+    std::vector<unsigned> _boundingBoxIndices;
+    GLuint VBO_b, VAO_b, EBO_b;
+    
+
     // Lock for writing vertex/normal and indices in parallel
     omp_lock_t writelock;
     omp_lock_t writelockIndices;
 
-    std::vector<glm::vec3> _VBOarray;
 
-    GLuint VBO, VAO, EBO;
 
     inline int clamp(int n, int lower, int upper) {
         return std::max(lower, std::min(n, upper));
