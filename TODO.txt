@@ -1,3 +1,18 @@
+:::::TODO:::::
+
+Lägg till en skybox
+
+Lägg till fps-kontroller
+
+Gör så att nya plättar genereras när man flyger nära
+
+Lägg till shadow-maps.
+
+Skapa celler nära användaren i hög upplösning, de längre bort i lägre upplösning
+
+
+:::::DONE:::::
+
 Textur - ändra textur/färg beroende på normal? Görs enklast i shader. Kan nog lägga till något slags noise här också?
 
 openmp till triangel-generering, mät tid före och efter implementation.
@@ -7,6 +22,7 @@ Lägg till någon slags ladd-tid för hur lång tid det är kvar, likt raytracer
 
 Gör så att createTriangle-funktionen lägger till vertices/normaler/indices i vectorer som skickas med, och sedan lägger till värdena i dessa till huvud-vektorn när loopen är slut.
 
+Lägg till fog på miljön, så att den blir grå/blå-aktig längre bort.
 
 
 
@@ -15,5 +31,7 @@ https://www.csee.umbc.edu/~ebert/693/THu/dividingcubes.html
 ide som inte användes:
 https://en.wikipedia.org/wiki/Sobel_operator
 
+Marching cubes:
+http://paulbourke.net/geometry/polygonise/
 
 

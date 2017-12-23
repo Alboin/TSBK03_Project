@@ -14,6 +14,7 @@ uniform vec3 clear_color;
 uniform vec2 window_dim;
 uniform sampler2D refractionTexture;
 uniform sampler2D earthTexture;
+uniform int fogEnabled;
 
 float nearClip = 0.1;
 float farClip = 1000.0;
@@ -126,20 +127,28 @@ float snoise(vec3 v)
 // A function for generating grass-looking texture on the up-side of objects.
 vec3 grassOnTop()
 {
-	vec3 up = vec3(0,1,0);
-
+  
   float noise0 = (snoise(newPos * 1) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise1 = (snoise(newPos * 2) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise2 = (snoise(newPos * 4) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise3 = (snoise(newPos * 6) * 0.5 + 0.5) * 0.2 + 0.8;
   float noise4 = (snoise(newPos * 10) * 0.5 + 0.5) * 0.2 + 0.8;
+  float noise5 = (snoise(newPos * 30) * 0.5 + 0.5) * 0.2 + 0.8;
+  float noise6 = (snoise(newPos * 60) * 0.5 + 0.5) * 0.2 + 0.8;
 
-	vec3 brown = vec3(0.9, 0.7, 0.5) * noise0 * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
-	vec3 green = vec3(0.55, 1.0, 0.55) * noise0 * noise1 * noise2 * noise3 * noise4;// * (snoise(newPos * 5) / 8 + 0.75) * (snoise(newPos) / 3 + 0.4); 
+	vec3 brown = vec3(0.9, 0.7, 0.5) * noise0 * noise1 * noise2 * noise3 * noise4 * noise5 * noise6;// * (snoise(newPos * 0.5) / 8 + 0.75) * (snoise(newPos * 3) / 8 + 0.75);
+	vec3 green = vec3(0.55, 1.0, 0.55) * noise0 * noise1 * noise2 * noise3 * noise4 * noise5 * noise6;// * (snoise(newPos * 5) / 8 + 0.75) * (snoise(newPos) / 3 + 0.4); 
 
-	float picker = smoothstep(0.55, 0.75, (dot(newNormal, up) / 2.0) + 0.5f);
+	vec3 up = vec3(0,1,0);
+	float picker = smoothstep(0.8, 1.0, (dot(newNormal, up) / 2.0) + 0.5f);
 
-	vec3 color = mix(brown, green, picker);
+	float dirtEdge = min(smoothstep(0.8, 0.0, (dot(newNormal, up) / 2.0) + 0.5f) + 0.6, 1.0);
+
+  float dirtInGrass = smoothstep(0.0, 0.65, snoise(newPos * 0.2) * 0.5 + 0.5);
+
+  green = mix(brown, green, dirtInGrass);
+
+	vec3 color = mix(brown * dirtEdge, green, picker);
 
 	return color;
 }
@@ -150,7 +159,7 @@ void main()
 	vec3 color = grassOnTop();
 	
 
-	const vec3 light = vec3(0.58, 0.58, 0.58); // Given in VIEW coordinates! You usually specify light sources in world coordinates.
+	const vec3 light = lDir;//vec3(0.58, 0.58, 0.58); // Given in VIEW coordinates! You usually specify light sources in world coordinates.
 	float ambient, diffuse, specular, shade;
 	
 	// Ambient
@@ -175,5 +184,11 @@ void main()
   float depth = (2 * nearClip) / (farClip + nearClip - gl_FragCoord.z * (farClip - nearClip));
 
   vec3 result = shade * color;
+
+  // Create fog with distance.
+  vec3 distantGray = vec3(0.8, 0.8, 1.0);
+  float distance = smoothstep(0.4, 1.0, clamp(depth * 10, 0.0, 1.0)) * 0.8;
+  result = mix(result, distantGray, distance * fogEnabled);
+
 	outColor = vec4(result, depth);//vec4(shade * color, 1.0);
 } 

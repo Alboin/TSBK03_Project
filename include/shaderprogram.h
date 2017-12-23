@@ -30,6 +30,8 @@ public:
 		return prog;
 	}
 
+	GLuint getProgram() { return prog; }; 
+
 	/// Activate the shader program
 	inline void operator()() {
 		glUseProgram(prog);
@@ -39,7 +41,7 @@ public:
 
 	~ShaderProgram();
 
-	void updateCommonUniforms(MouseRotator rotator, float width, float height, float time, glm::vec3 clear_color);
+	void updateCommonUniforms(MouseRotator rotator, float width, float height, float time, glm::vec3 clear_color, glm::vec3 light_direction);
 
 protected:
 	GLuint AttachShader(GLuint shaderType, std::string source);

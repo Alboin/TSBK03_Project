@@ -33,8 +33,8 @@ void KeyTranslator::poll(GLFWwindow *window) {
 }
 
 void MouseRotator::init(GLFWwindow *window) {
-	phi = 0.0;
-	theta = 0.0;
+	phi = 0.5;
+	theta = 0.5;
 	transX = 0.0f;
 	transY = 0.0f;
 	zoom = 0.0;

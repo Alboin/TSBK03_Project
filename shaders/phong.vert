@@ -11,7 +11,8 @@ out vec2 texCoord;
 uniform mat4 MV;
 uniform mat4 P;
 uniform float time;
-
+uniform float startTime;
+uniform int crazyEnabled;
 
 //
 // Description : Array and textureless GLSL 2D/3D/4D simplex 
@@ -127,7 +128,12 @@ void main() {
   float n2 = snoise(position * 1.0) * scale;
   float n3 = snoise(position * 2.0) * scale;
 
-  newPos = position;// + (normal * snoise(position + time / 3.0) * 0.1) + (normal * snoise(position * 0.5 + time / 2.0) * 0.1);
+  float enableCrazyStuff = crazyEnabled * clamp(time - startTime, 0.0, 1.0);
+
+  if(crazyEnabled == 0)
+    enableCrazyStuff = clamp(startTime + 1 - time, 0.0, 1.0);
+
+  newPos = position + enableCrazyStuff * ((normal * snoise(position + time / 3.0) * 0.1) + (normal * snoise(position * 0.5 + time / 2.0) * 0.1));
 	//newPos = position + (normal * n1) + (normal * n2) + (normal *n3);
 	
   newNormal = normal;

@@ -70,7 +70,8 @@ void VoxelData::generateData(const float noiseScale)
             {
                 //Create a plane at y = 0.
                 _data[x][y][z] = (float)(y) / (float)(_dim + 1);
-                
+
+
                 for(int octave = 0; octave < 8; octave++)
                 {
                     glm::vec3 pos = getWorldPosition(x,y,z) * noiseScale * (float)pow(2, octave);

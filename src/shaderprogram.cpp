@@ -145,7 +145,7 @@ GLuint ShaderProgram::compile(GLuint type, GLchar const *source) {
 	return shader;
 }
 
-void ShaderProgram::updateCommonUniforms(MouseRotator rotator, float width, float height, float time, glm::vec3 clear_color) {
+void ShaderProgram::updateCommonUniforms(MouseRotator rotator, float width, float height, float time, glm::vec3 clear_color, glm::vec3 light_direction) {
 	// Uniforms
 	GLint MV_Loc, P_Loc, lDir_Loc, camPos_Loc, clear_color_Loc, time_Loc, window_dim_Loc = -1;
 	time_Loc = glGetUniformLocation(*this, "time");
@@ -163,7 +163,7 @@ void ShaderProgram::updateCommonUniforms(MouseRotator rotator, float width, floa
 	
 	glm::mat4 VRotX = glm::rotate(M, (rotator.phi), glm::vec3(0.0f, 1.0f, 0.0f)); //Rotation about y-axis
 	glm::mat4 VRotY = glm::rotate(M, (rotator.theta), glm::vec3(1.0f, 0.0f, 0.0f)); //Rotation about x-axis
-	glm::vec4 camPos = glm::vec4(rotator.transX, 0.0f, 80.0f + rotator.zoom, 1.0f);
+	glm::vec4 camPos = glm::vec4(rotator.transX, 0.0f, 150.0f + rotator.zoom, 1.0f);
 	//glm::mat4 tests = glm::translate(M, glm::vec3(camPos) + glm::vec3(rotator.transX, rotator.transX, 0.0));
 	camPos = VRotX * VRotY * camPos;
 	glm::vec3 scene_center(0.0f, 0.0f, 0.0f);
@@ -171,7 +171,7 @@ void ShaderProgram::updateCommonUniforms(MouseRotator rotator, float width, floa
 	P = glm::perspectiveFov(50.0f, static_cast<float>(width), static_cast<float>(height), 0.1f, 1000.0f);
 	MV = V * M;
 	
-	glm::vec3 lDir = glm::vec3(1.0f, 0.0f, 0.0f);
+	glm::vec3 lDir = light_direction;
 
 	//Send uniform variables
 	glProgramUniform1f(*this, time_Loc, time);
